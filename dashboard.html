@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Study Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, #e0f2fe, #f5f3ff, #fdf2f8);
+      color: #0f172a;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 20px auto 40px;
+      padding: 20px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: conic-gradient(from 180deg, #38bdf8, #6366f1, #f97316, #22c55e, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45);
+    }
+
+    .logo-text h1 {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .logo-text p {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .view-toggle {
+      display: flex;
+      padding: 4px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      gap: 4px;
+    }
+
+    .toggle-btn {
+      border: none;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+      background: transparent;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-btn.active {
+      background: #0f172a;
+      color: #f9fafb;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.4);
+    }
+
+    .badge-ai {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(96, 165, 250, 0.12);
+      color: #1d4ed8;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.3fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: #f8fafc;
+      border-radius: 20px;
+      padding: 16px 16px 18px;
+      border: 1px solid #e2e8f0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel h2 {
+      font-size: 17px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 14px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #4b5563;
+    }
+
+    .chip.highlight {
+      background: rgba(52, 211, 153, 0.12);
+      color: #047857;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+    }
+
+    label {
+      font-weight: 500;
+      color: #111827;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    label span.hint {
+      font-size: 11px;
+      font-weight: 400;
+      color: #6b7280;
+    }
+
+    input, textarea, select {
+      padding: 8px 9px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      outline: none;
+      background: #ffffff;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .subjects-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0 4px;
+    }
+
+    .subjects-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .subject-row {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .subject-row input,
+    .subject-row textarea {
+      font-size: 12px;
+      padding: 6px 7px;
+    }
+
+    .subject-row textarea {
+      min-height: 30px;
+      max-height: 60px;
+    }
+
+    .btn,
+    .btn-ghost {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 13px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #f9fafb;
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-ghost {
+      background: rgba(148, 163, 184, 0.12);
+      color: #111827;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(148, 163, 184, 0.3);
+    }
+
+    .small-text {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .student-only,
+    .parent-only {
+      display: none;
+    }
+    .student-only.active,
+    .parent-only.active {
+      display: block;
+    }
+
+    /* Right side visuals */
+
+    .visual-stack {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 1100px) {
+      .visual-stack {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card-visual {
+      border-radius: 18px;
+      padding: 12px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: linear-gradient(145deg, #0f172a, #020617);
+      color: #f9fafb;
+      min-height: 120px;
+    }
+
+    .card-visual h3 {
+      font-size: 13px;
+      margin-bottom: 4px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .card-visual .label {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    /* “Board” image */
+    .board {
+      border-radius: 14px;
+      background: radial-gradient(circle at top left, #22c55e, #15803d, #052e16);
+      padding: 10px;
+      position: relative;
+      box-shadow: 0 12px 30px rgba(22, 163, 74, 0.5);
+    }
+
+    .board-inner {
+      border-radius: 10px;
+      border: 2px solid rgba(187, 247, 208, 0.8);
+      padding: 8px;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      color: #bbf7d0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .board-inner span.highlight {
+      color: #fef9c3;
+    }
+
+    /* Timetable visual */
+    .timetable {
+      border-radius: 14px;
+      background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+      padding: 10px;
+      color: #111827;
+      box-shadow: 0 12px 30px rgba(129, 140, 248, 0.45);
+    }
+
+    .timetable table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .timetable th,
+    .timetable td {
+      padding: 4px 6px;
+      border: 1px solid #e5e7eb;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .timetable th {
+      background: #eef2ff;
+      font-weight: 600;
+    }
+
+    /* Timer visual */
+
+    .timer-card {
+      margin-top: 8px;
+      border-radius: 14px;
+      background: radial-gradient(circle at top, #f97316, #be123c, #7c2d12);
+      padding: 10px;
+      color: #fefce8;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 10px 25px rgba(248, 113, 113, 0.55);
+    }
+
+    .timer-display {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .timer-controls button {
+      flex: 1;
+      font-size: 11px;
+      padding: 5px 0;
+      border-radius: 99px;
+      border: none;
+      cursor: pointer;
+      background: rgba(248, 250, 252, 0.1);
+      color: #fef9c3;
+    }
+
+    .timer-controls button:hover {
+      background: rgba(248, 250, 252, 0.25);
+    }
+
+    /* Weekly assignments + performance */
+
+    .assignments {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.8);
+    }
+
+    .assignments-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .assignment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .assignment-card {
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 6px 8px;
+      font-size: 11px;
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 0.8fr;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tag {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.12);
+      color: #1d4ed8;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tag.green {
+      background: rgba(34, 197, 94, 0.12);
+      color: #15803d;
+    }
+
+    .tag.red {
+      background: rgba(248, 113, 113, 0.12);
+      color: #b91c1c;
+    }
+
+    .assignment-card input {
+      padding: 4px 6px;
+      font-size: 11px;
+    }
+
+    /* Parent dashboard visuals */
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .stat-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 600px) {
+      .stat-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-card {
+      border-radius: 14px;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card small {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .stat-card strong {
+      font-size: 18px;
+    }
+
+    .stat-spark {
+      position: absolute;
+      right: -8px;
+      bottom: -8px;
+      width: 50px;
+      height: 50px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.4), transparent);
+    }
+
+    .parent-table {
+      margin-top: 8px;
+      border-radius: 14px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+    }
+
+    .parent-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .parent-table th,
+    .parent-table td {
+      padding: 5px 7px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    .parent-table thead {
+      background: #eff6ff;
+    }
+
+    .alert-list {
+      margin-top: 8px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .alert-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      border-radius: 8px;
+      background: rgba(254, 249, 195, 0.7);
+      border: 1px solid #facc15;
+    }
+
+    .alert-item span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Task list (for notify parent) */
+
+    .task-list {
+      margin-top: 10px;
+      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px dashed #e5e7eb;
+      padding: 8px;
+    }
+
+    .task-list h4 {
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: #0f172a;
+      color: #f9fafb;
+      font-size: 12px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.7);
+      z-index: 100;
+    }
+
+    .toast.visible {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">
+        <div class="logo-mark">AI</div>
+        <div class="logo-text">
+          <h1>AI Study Planner</h1>
+          <p>Smart timetable, weekly assignments & parent alerts</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="badge-ai">Auto-schedule • Weekly AI Assignments</span>
+        <div class="view-toggle">
+          <button class="toggle-btn active" data-view="student">
+            👨‍🎓 Student
+          </button>
+          <button class="toggle-btn" data-view="parent">
+            👨‍👩‍👦 Parent
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main>
+      <!-- Left: Forms & Inputs -->
+      <section class="panel">
+        <!-- STUDENT DASHBOARD FORM -->
+        <div class="student-only active" id="student-panel">
+          <h2>Student Dashboard</h2>
+          <p class="panel-subtitle">
+            Upload your subjects, syllabus and study time. Let AI create your timetable and weekly assignments.
+          </p>
+
+          <div class="chip-row">
+            <span class="chip">⏱ Time-aware scheduling</span>
+            <span class="chip highlight">📬 Parent alerts on missed tasks</span>
+            <span class="chip">📝 Weekly assignments & marks tracking</span>
+          </div>
+
+          <form id="study-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Student Name</label>
+                <input type="text" id="studentName" placeholder="e.g. Amshu Raj" required />
+              </div>
+              <div class="form-group">
+                <label>Class / Grade</label>
+                <input type="text" id="studentClass" placeholder="e.g. 10th, 2nd PUC" />
+              </div>
+              <div class="form-group">
+                <label>Daily Study Time (hours) <span class="hint">Total available time</span></label>
+                <input type="number" id="studyHours" min="1" step="0.5" placeholder="e.g. 3.5" required />
+              </div>
+              <div class="form-group">
+                <label>Preferred Study Slot <span class="hint">Time interval</span></label>
+                <select id="studySlot">
+                  <option value="evening">Evening (5pm – 9pm)</option>
+                  <option value="morning">Morning (6am – 9am)</option>
+                  <option value="night">Night (9pm – 12am)</option>
+                  <option value="custom">Custom / Flexible</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Parent details for alerts -->
+            <div class="subjects-header">
+              <h3 style="font-size:13px;">Parent Details (for alert emails)</h3>
+              <span class="small-text">Alerts are sent if tasks are not completed</span>
+            </div>
+
+            <div class="form-grid" style="margin-bottom:4px;">
+              <div class="form-group">
+                <label>Parent Name</label>
+                <input type="text" id="parentName" placeholder="e.g. Mr. Raj" required />
+              </div>
+              <div class="form-group">
+                <label>Parent Email</label>
+                <input type="email" id="parentEmail" placeholder="parent@example.com" required />
+              </div>
+              <div class="form-group">
+                <label>Parent Phone</label>
+                <input type="tel" id="parentPhone" placeholder="+91-XXXXXXXXXX" />
+              </div>
+              <div class="form-group">
+                <label>Relationship</label>
+                <input type="text" id="parentRelation" placeholder="Father / Mother / Guardian" />
+              </div>
+            </div>
+
+            <!-- Subjects & syllabus -->
+            <div class="subjects-header">
+              <h3 style="font-size:13px;">Subjects & Syllabus</h3>
+              <button type="button" class="btn-ghost" id="addSubjectBtn">＋ Add Subject</button>
+            </div>
+            <p class="small-text">
+              Add each subject with its syllabus. AI will divide your available time across all subjects and topics.
+            </p>
+
+            <div class="subjects-list" id="subjectsList">
+              <!-- Subject rows injected here -->
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+              <div class="small-text">
+                AI will generate a balanced schedule & weekly assignments from these details.
+              </div>
+              <button type="submit" class="btn">
+                ⚡ Generate AI Study Schedule
+              </button>
+            </div>
+          </form>
+
+          <!-- Task list for alert -->
+          <div class="task-list" id="taskList">
+            <h4>Today's Tasks</h4>
+            <div class="small-text">
+              Mark completed tasks. If any remain incomplete, click "Notify Parent" to send alert.
+            </div>
+            <div id="taskItems" style="margin-top:4px;">
+              <!-- dynamically filled -->
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:6px; gap:6px;">
+              <button class="btn-ghost" id="markAllDoneBtn">✅ Mark All Done</button>
+              <button class="btn" id="notifyParentBtn">📬 Notify Parent</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PARENT DASHBOARD FORM -->
+        <div class="parent-only" id="parent-panel">
+          <h2>Parent Dashboard</h2>
+          <p class="panel-subtitle">
+            View your child’s schedule, assignment marks and performance trends in one place.
+          </p>
+
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="form-group">
+              <label>Parent Email</label>
+              <input type="email" placeholder="Enter email registered by student" />
+            </div>
+            <div class="form-group">
+              <label>Student Name</label>
+              <input type="text" placeholder="Child’s name" />
+            </div>
+            <div class="form-group">
+              <label>Alert Frequency <span class="hint">for missed tasks</span></label>
+              <select>
+                <option>Immediate</option>
+                <option>Daily summary</option>
+                <option>Weekly summary</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Additional CC Email</label>
+              <input type="email" placeholder="Optional" />
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat-card">
+              <small>Weekly Completion</small>
+              <strong>82%</strong>
+              <p class="small-text">of planned tasks completed</p>
+              <div class="stat-spark"></div>
+            </div>
+            <div class="stat-card">
+              <small>Average Assignment Score</small>
+              <strong>88</strong>
+              <p class="small-text">based on recent assignments</p>
+              <div class="stat-spark" style="background:radial-gradient(circle, rgba(52,211,153,0.5),transparent);"></div>
+            </div>
+            <div class="stat-card">
+              <small>Alerts This Week</small>
+              <strong>2</strong>
+              <p class="small-text">Missed tasks notified to parents</p>
+              <div class="stat-spark" style="background:radial-gradient(circle, rgba(248,113,113,0.5),transparent);"></div>
+            </div>
+          </div>
+
+          <!-- Assignment table -->
+          <div class="parent-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Assignment</th>
+                  <th>Marks</th>
+                  <th>Performance</th>
+                </tr>
+              </thead>
+              <tbody id="parentAssignments">
+                <tr>
+                  <td>Mathematics</td>
+                  <td>Algebra – Chapter 3</td>
+                  <td>9 / 10</td>
+                  <td><span class="tag green">Excellent</span></td>
+                </tr>
+                <tr>
+                  <td>Science</td>
+                  <td>Acids & Bases Worksheet</td>
+                  <td>7 / 10</td>
+                  <td><span class="tag">Good</span></td>
+                </tr>
+                <tr>
+                  <td>English</td>
+                  <td>Prose Chapter Summary</td>
+                  <td>6 / 10</td>
+                  <td><span class="tag red">Needs support</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Alert timeline -->
+          <div class="alert-list">
+            <div class="alert-item">
+              <span>⚠️ <strong>Math practice</strong> not completed</span>
+              <span class="small-text">Email sent to parent 7:45 PM</span>
+            </div>
+            <div class="alert-item">
+              <span>⚠️ <strong>Science reading</strong> skipped</span>
+              <span class="small-text">Email sent to parent 9:10 PM</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Visuals & Timetable / Timer / Assignments -->
+      <section class="panel">
+        <!-- STUDENT SIDE VISUALS -->
+        <div class="student-only active" id="student-visuals">
+          <div class="visual-stack">
+            <!-- Digital Board (image concept: board) -->
+            <div class="card-visual board">
+              <h3>Smart Study Board</h3>
+              <p class="label">AI writes your daily plan like on a classroom board.</p>
+              <div class="board-inner" id="boardContent">
+                <div>📌 <span class="highlight">Today’s Focus:</span> —</div>
+                <div>1️⃣ Subject: —</div>
+                <div>2️⃣ Subject: —</div>
+                <div>3️⃣ Subject: —</div>
+                <div>⏱ Slot: —</div>
+              </div>
+            </div>
+
+            <!-- Timetable card (image concept: timetable) -->
+            <div class="card-visual timetable">
+              <h3>AI Timetable</h3>
+              <p class="label">Auto-distributed study time</p>
+              <div style="overflow-x:auto;">
+                <table id="scheduleTable">
+                  <thead>
+                    <tr>
+                      <th>Slot</th>
+                      <th>Subject</th>
+                      <th>Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>-</td>
+                      <td>-</td>
+                      <td>-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Timer (image concept: timer) -->
+              <div class="timer-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:11px; opacity:0.9;">Focus Timer</span>
+                  <span style="font-size:11px; opacity:0.9;">Pomodoro 25:00</span>
+                </div>
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="timer-controls">
+                  <button type="button" id="timerStart">Start</button>
+                  <button type="button" id="timerPause">Pause</button>
+                  <button type="button" id="timerReset">Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Assignments & Marks -->
+          <div class="assignments">
+            <div class="assignments-header">
+              <span>Weekly AI Assignments</span>
+              <span class="small-text" id="assignmentSummary">Generated from your syllabus</span>
+            </div>
+            <div class="assignment-list" id="assignmentList">
+              <!-- assignment cards injected here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- PARENT SIDE VISUALS -->
+        <div class="parent-only" id="parent-visuals">
+          <div class="card-visual" style="background:radial-gradient(circle at top,#1d4ed8,#020617);">
+            <h3>Live Progress Snapshot</h3>
+            <p class="label">Shows how consistent your child is with the AI-generated plan.</p>
+            <div style="margin-top:6px; font-size:12px;">
+              <div>🕒 Planned hours (today): <strong id="plannedHours">3.5</strong> hrs</div>
+              <div>✅ Completed so far: <strong id="completedHours">2.0</strong> hrs</div>
+              <div>📚 Active subject: <strong id="activeSubject">Mathematics</strong></div>
+            </div>
+            <div style="margin-top:8px;">
+              <div class="small-text">Completion bar</div>
+              <div style="height:8px; border-radius:999px; background:#020617; overflow:hidden; margin-top:4px;">
+                <div style="width:70%; height:100%; border-radius:999px; background:linear-gradient(90deg,#22c55e,#bef264);"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="assignments">
+            <div class="assignments-header">
+              <span>Alerts Timeline</span>
+              <span class="small-text">You’ll receive emails similar to these entries.</span>
+            </div>
+            <div class="alert-list" id="parentAlertList">
+              <div class="alert-item">
+                <span>📧 <strong>Math – Algebra practice</strong> was not completed.</span>
+                <span class="small-text">Alert email sent to parent</span>
+              </div>
+              <div class="alert-item">
+                <span>📧 <strong>Science – Reading task</strong> missed deadline.</span>
+                <span class="small-text">Alert email sent to parent</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span>📬 Parent alert simulated</span>
+    <span class="small-text">In real system, an email will be sent to the registered parent.</span>
+  </div>
+
+  <script>
+    // View toggle (Student / Parent)
+    const toggleButtons = document.querySelectorAll(".toggle-btn");
+    const studentSections = document.querySelectorAll(".student-only");
+    const parentSections = document.querySelectorAll(".parent-only");
+
+    toggleButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        toggleButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const view = btn.dataset.view;
+
+        if (view === "student") {
+          studentSections.forEach((s) => s.classList.add("active"));
+          parentSections.forEach((p) => p.classList.remove("active"));
+        } else {
+          studentSections.forEach((s) => s.classList.remove("active"));
+          parentSections.forEach((p) => p.classList.add("active"));
+        }
+      });
+    });
+
+    // Subjects dynamic rows
+    const subjectsList = document.getElementById("subjectsList");
+    const addSubjectBtn = document.getElementById("addSubjectBtn");
+
+    function createSubjectRow() {
+      const row = document.createElement("div");
+      row.className = "subject-row";
+
+      row.innerHTML = `
+        <input type="text" class="subject-name" placeholder="Subject e.g. Maths" required />
+        <textarea class="subject-syllabus" placeholder="Syllabus topics..."></textarea>
+        <button type="button" class="btn-ghost remove-subject" title="Remove subject">✕</button>
+      `;
+      row.querySelector(".remove-subject").addEventListener("click", () => {
+        row.remove();
+      });
+      return row;
+    }
+
+    // Add default 2 subjects on load
+    addSubjectBtn.addEventListener("click", () => {
+      subjectsList.appendChild(createSubjectRow());
+    });
+
+    subjectsList.appendChild(createSubjectRow());
+    subjectsList.appendChild(createSubjectRow());
+
+    // Study form submit => generate schedule, board text, assignments, tasks
+    const studyForm = document.getElementById("study-form");
+    const scheduleTableBody = document.querySelector("#scheduleTable tbody");
+    const boardContent = document.getElementById("boardContent");
+    const assignmentList = document.getElementById("assignmentList");
+    const assignmentSummary = document.getElementById("assignmentSummary");
+    const taskItems = document.getElementById("taskItems");
+
+studyForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const studentName = document.getElementById("studentName").value.trim() || "Student";
+  const slot = document.getElementById("studySlot").value;
+  const studyHours = parseFloat(document.getElementById("studyHours").value) || 1;
+
+  const parentName = document.getElementById("parentName").value.trim();
+  const parentEmail = document.getElementById("parentEmail").value.trim();
+  const parentPhone = document.getElementById("parentPhone").value.trim();
+  const parentRelation = document.getElementById("parentRelation").value.trim();
+
+  const subjectNodes = document.querySelectorAll(".subject-row");
+  const subjects = [];
+  subjectNodes.forEach((row) => {
+    const name = row.querySelector(".subject-name").value.trim();
+    const syllabus = row.querySelector(".subject-syllabus").value.trim();
+    if (name) {
+      subjects.push({ name, syllabus });
+    }
+  });
+
+  if (!subjects.length) {
+    alert("Please add at least one subject.");
+    return;
+  }
+  if (!parentName || !parentEmail) {
+    alert("Please enter parent name and email for alerts.");
+    return;
+  }
+
+  // remember who this plan belongs to
+  currentStudentName = studentName;
+
+  const payload = {
+    studentName,
+    studyHours,
+    studySlot: slot,
+    parent: {
+      name: parentName,
+      email: parentEmail,
+      phone: parentPhone,
+      relation: parentRelation,
+    },
+    subjects,
+  };
+
+  try {
+    const res = await fetch("http://localhost:4000/api/generate-schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "Error generating schedule from backend");
+      return;
+    }
+
+    const { schedule, weeklyAssignments, todayTasks, studySlot, timePerSubject } = data;
+
+    // 1) Fill timetable
+    scheduleTableBody.innerHTML = "";
+    schedule.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.slot}</td>
+        <td>${item.subject}</td>
+        <td>${item.duration}</td>
+      `;
+      scheduleTableBody.appendChild(tr);
+    });
+
+    // 2) Update digital board
+    const slotText =
+      studySlot === "evening"
+        ? "5:00 PM – 9:00 PM"
+        : studySlot === "morning"
+        ? "6:00 AM – 9:00 AM"
+        : studySlot === "night"
+        ? "9:00 PM – 12:00 AM"
+        : "Flexible (Custom)";
+
+    boardContent.innerHTML =
+      `<div>📌 <span class="highlight">Today’s Plan for ${studentName}</span></div>` +
+      schedule
+        .slice(0, 3)
+        .map((s, i) => `<div>${i + 1}️⃣ ${s.subject} — ${s.duration}</div>`)
+        .join("") +
+      `<div>⏱ Slot: ${slotText}</div>`;
+
+    // 3) Weekly assignments
+    assignmentList.innerHTML = "";
+    weeklyAssignments.forEach((a) => {
+      const card = document.createElement("div");
+      card.className = "assignment-card";
+      card.innerHTML = `
+        <div>
+          <div><strong>${a.subject}</strong></div>
+          <div class="small-text">${a.syllabus}</div>
+        </div>
+        <div>
+          <div class="tag">Due: Week ${a.dueWeek}</div>
+          <div class="small-text">From backend</div>
+        </div>
+        <div>
+          <input type="number" class="assignment-mark" placeholder="Marks" min="0" max="10" />
+        </div>
+      `;
+      assignmentList.appendChild(card);
+    });
+
+    assignmentSummary.textContent = `Assignments created for ${weeklyAssignments.length} subjects via backend`;
+
+    // 4) Today’s tasks list
+    taskItems.innerHTML = "";
+    todayTasks.forEach((t) => {
+      const item = document.createElement("div");
+      item.className = "task-item";
+      item.innerHTML = `
+        <input type="checkbox" class="task-checkbox" data-id="${t.id}" />
+        <span>${t.subject} — ${t.duration}</span>
+      `;
+      taskItems.appendChild(item);
+    });
+
+    alert("Schedule & assignments generated from backend ✅");
+  } catch (err) {
+    console.error(err);
+    alert("Could not connect to backend. Is `npm run dev` running?");
+  }
+});
+
+
+    // Notify Parent (simulate email)
+    const notifyParentBtn = document.getElementById("notifyParentBtn");
+    const toast = document.getElementById("toast");
+    const markAllDoneBtn = document.getElementById("markAllDoneBtn");
+
+    notifyParentBtn.addEventListener("click", async () => {
+  if (!currentStudentName) {
+    alert("Generate a schedule first so the backend knows this student.");
+    return;
+  }
+
+  const checkboxes = document.querySelectorAll(".task-checkbox");
+  const completedTaskIds = [];
+  checkboxes.forEach((cb) => {
+    if (cb.checked && cb.dataset.id) {
+      completedTaskIds.push(cb.dataset.id);
+    }
+  });
+
+  try {
+    // 1) Update tasks on backend (which ones are done)
+    const updateRes = await fetch("http://localhost:4000/api/update-tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        studentName: currentStudentName,
+        completedTaskIds,
+      }),
+    });
+    const updateData = await updateRes.json();
+
+    if (!updateRes.ok) {
+      alert(updateData.error || "Error updating tasks on backend");
+      return;
+    }
+
+    if (updateData.incomplete === 0) {
+      alert("All tasks completed. No alert will be sent to parent.");
+      return;
+    }
+
+    // 2) Ask backend to "alert parent" (simulate email)
+    const alertRes = await fetch("http://localhost:4000/api/alert-parent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentName: currentStudentName }),
+    });
+    const alertData = await alertRes.json();
+
+    if (!alertRes.ok) {
+      alert(alertData.error || "Error triggering parent alert");
+      return;
+    }
+
+    // Show toast in UI
+    toast.classList.add("visible");
+    setTimeout(() => {
+      toast.classList.remove("visible");
+    }, 3500);
+  } catch (err) {
+    console.error(err);
+    alert("Could not connect to backend for parent alert.");
+  }
+});
+
+
+    markAllDoneBtn.addEventListener("click", () => {
+      const checkboxes = document.querySelectorAll(".task-checkbox");
+      checkboxes.forEach((cb) => (cb.checked = true));
+    });
+
+    // Simple Pomodoro Timer (25 min)
+    let timerSeconds = 25 * 60;
+    let timerInterval = null;
+
+    const timerDisplay = document.getElementById("timerDisplay");
+    const timerStart = document.getElementById("timerStart");
+    const timerPause = document.getElementById("timerPause");
+    const timerReset = document.getElementById("timerReset");
+
+    function renderTimer() {
+      const minutes = Math.floor(timerSeconds / 60)
+        .toString()
+        .padStart(2, "0");
+      const seconds = (timerSeconds % 60).toString().padStart(2, "0");
+      timerDisplay.textContent = `${minutes}:${seconds}`;
+    }
+
+    function startTimer() {
+      if (timerInterval) return;
+      timerInterval = setInterval(() => {
+        if (timerSeconds > 0) {
+          timerSeconds--;
+          renderTimer();
+        } else {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          alert("Time is up! Take a short break.");
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timerSeconds = 25 * 60;
+      renderTimer();
+    }
+
+    timerStart.addEventListener("click", startTimer);
+    timerPause.addEventListener("click", pauseTimer);
+    timerReset.addEventListener("click", resetTimer);
+
+    renderTimer();
+  </script>
+</body>
+</html>
