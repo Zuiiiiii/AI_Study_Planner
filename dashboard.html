@@ -771,48 +771,59 @@
           </p>
 
           <div class="form-grid" style="margin-bottom:10px;">
-            <div class="form-group">
-              <label>Parent Email</label>
-              <input type="email" placeholder="Enter email registered by student" />
-            </div>
-            <div class="form-group">
-              <label>Student Name</label>
-              <input type="text" placeholder="Child’s name" />
-            </div>
-            <div class="form-group">
-              <label>Alert Frequency <span class="hint">for missed tasks</span></label>
-              <select>
-                <option>Immediate</option>
-                <option>Daily summary</option>
-                <option>Weekly summary</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Additional CC Email</label>
-              <input type="email" placeholder="Optional" />
-            </div>
-          </div>
+  <div class="form-group">
+    <label>Parent Email</label>
+    <input type="email" id="parentViewEmail" placeholder="Enter parent’s email" />
+  </div>
+  <div class="form-group">
+    <label>Student Name</label>
+    <input type="text" id="parentViewStudent" placeholder="Enter child’s name" />
+  </div>
+  <div class="form-group">
+    <label>Alert Frequency <span class="hint">future feature</span></label>
+    <select id="parentAlertFrequency">
+      <option>Immediate</option>
+      <option>Daily summary</option>
+      <option>Weekly summary</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Additional CC email</label>
+    <input type="email" id="parentCcEmail" placeholder="Optional" />
+  </div>
+</div>
 
-          <div class="stat-row">
-            <div class="stat-card">
-              <small>Weekly Completion</small>
-              <strong>82%</strong>
-              <p class="small-text">of planned tasks completed</p>
-              <div class="stat-spark"></div>
-            </div>
-            <div class="stat-card">
-              <small>Average Assignment Score</small>
-              <strong>88</strong>
-              <p class="small-text">based on recent assignments</p>
-              <div class="stat-spark" style="background:radial-gradient(circle, rgba(52,211,153,0.5),transparent);"></div>
-            </div>
-            <div class="stat-card">
-              <small>Alerts This Week</small>
-              <strong>2</strong>
-              <p class="small-text">Missed tasks notified to parents</p>
-              <div class="stat-spark" style="background:radial-gradient(circle, rgba(248,113,113,0.5),transparent);"></div>
-            </div>
-          </div>
+<div style="text-align:right; margin-bottom:10px;">
+  <button class="btn" id="loadParentReportBtn">🔍 Load Student Report</button>
+</div>
+  <!-- Parent stats summary -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <small>Weekly Completion</small>
+      <strong id="weeklyCompletionValue">--%</strong>
+      <p class="small-text">of planned tasks completed</p>
+      <div class="stat-spark"></div>
+    </div>
+    <div class="stat-card">
+      <small>Average Assignment Score</small>
+      <strong id="avgAssignmentScoreValue">--</strong>
+      <p class="small-text">based on recent assignments</p>
+      <div
+        class="stat-spark"
+        style="background:radial-gradient(circle, rgba(52,211,153,0.5),transparent);"
+      ></div>
+    </div>
+    <div class="stat-card">
+      <small>Alerts This Week</small>
+      <strong id="alertsThisWeekValue">--</strong>
+      <p class="small-text">Missed tasks notified to parents</p>
+      <div
+        class="stat-spark"
+        style="background:radial-gradient(circle, rgba(248,113,113,0.5),transparent);"
+      ></div>
+    </div>
+  </div>
+
 
           <!-- Assignment table -->
           <div class="parent-table">
@@ -981,6 +992,18 @@
     const toggleButtons = document.querySelectorAll(".toggle-btn");
     const studentSections = document.querySelectorAll(".student-only");
     const parentSections = document.querySelectorAll(".parent-only");
+    // Parent dashboard DOM references
+    const parentViewStudent = document.getElementById("parentViewStudent");
+    const loadParentReportBtn = document.getElementById("loadParentReportBtn");
+    const weeklyCompletionValue = document.getElementById("weeklyCompletionValue");
+    const avgAssignmentScoreValue = document.getElementById("avgAssignmentScoreValue");
+    const alertsThisWeekValue = document.getElementById("alertsThisWeekValue");
+    const plannedHoursSpan = document.getElementById("plannedHours");
+    const completedHoursSpan = document.getElementById("completedHours");
+    const activeSubjectSpan = document.getElementById("activeSubject");
+    const parentAssignmentsBody = document.getElementById("parentAssignments");
+    const parentAlertList = document.getElementById("parentAlertList");
+
 
     toggleButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1288,6 +1311,101 @@ studyForm.addEventListener("submit", async (e) => {
     timerReset.addEventListener("click", resetTimer);
 
     renderTimer();
+    loadParentReportBtn.addEventListener("click", async () => {
+  const studentName = parentViewStudent.value.trim();
+  if (!studentName) {
+    alert("Please enter the student name.");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      "http://localhost:4000/api/parent-overview?studentName=" +
+        encodeURIComponent(studentName)
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Could not load parent report.");
+      return;
+    }
+
+    const { assignments, summary, tasks } = data;
+
+    // Update stat cards
+    weeklyCompletionValue.textContent = summary.completionPercent + "%";
+    avgAssignmentScoreValue.textContent =
+      summary.avgMarks !== null ? summary.avgMarks : "--";
+    alertsThisWeekValue.textContent = summary.alertsThisWeek;
+
+    // Update side snapshot
+    plannedHoursSpan.textContent = summary.plannedHours;
+    completedHoursSpan.textContent = summary.completedHours;
+    activeSubjectSpan.textContent = summary.activeSubject || "-";
+
+    // Fill assignment table
+    parentAssignmentsBody.innerHTML = "";
+    assignments.forEach((a) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${a.subject}</td>
+        <td>${a.syllabus}</td>
+        <td>${a.marks === null ? "-" : a.marks}</td>
+        <td>
+          <span class="tag ${
+            a.marks === null
+              ? ""
+              : a.marks >= 8
+              ? "green"
+              : a.marks >= 6
+              ? ""
+              : "red"
+          }">
+            ${
+              a.marks === null
+                ? "Not graded"
+                : a.marks >= 8
+                ? "Excellent"
+                : a.marks >= 6
+                ? "Good"
+                : "Needs support"
+            }
+          </span>
+        </td>
+      `;
+      parentAssignmentsBody.appendChild(tr);
+    });
+
+    // Alerts timeline
+    parentAlertList.innerHTML = "";
+    const incomplete = tasks.filter((t) => !t.done);
+
+    if (incomplete.length === 0) {
+      parentAlertList.innerHTML = `
+        <div class="alert-item">
+          <span>✅ No missed tasks.</span>
+          <span class="small-text">All tasks completed.</span>
+        </div>`;
+    } else {
+      incomplete.forEach((t) => {
+        const div = document.createElement("div");
+        div.className = "alert-item";
+        div.innerHTML = `
+          <span>📧 <strong>${t.subject}</strong> (${t.duration}) was not completed.</span>
+          <span class="small-text">Would trigger alert email.</span>
+        `;
+        parentAlertList.appendChild(div);
+      });
+    }
+
+    alert("Parent Dashboard updated successfully 🎉");
+  } catch (err) {
+     console.error("Parent dashboard error:", err);
+    alert("Error in parent dashboard: " + err.message);
+  }
+});
+
   </script>
 </body>
 </html>
