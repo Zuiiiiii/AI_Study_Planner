@@ -955,7 +955,10 @@
             <div style="margin-top:8px;">
               <div class="small-text">Completion bar</div>
               <div style="height:8px; border-radius:999px; background:#020617; overflow:hidden; margin-top:4px;">
-                <div style="width:70%; height:100%; border-radius:999px; background:linear-gradient(90deg,#22c55e,#bef264);"></div>
+                <div
+                id="completionBarFill"
+                style="width:0%; height:100%; border-radius:999px; background:linear-gradient(90deg,#22c55e,#bef264); transition:width 0.3s ease;"
+                ></div>
               </div>
             </div>
           </div>
@@ -1003,6 +1006,7 @@
     const activeSubjectSpan = document.getElementById("activeSubject");
     const parentAssignmentsBody = document.getElementById("parentAssignments");
     const parentAlertList = document.getElementById("parentAlertList");
+    const completionBarFill = document.getElementById("completionBarFill");
 
 
     toggleButtons.forEach((btn) => {
@@ -1343,7 +1347,10 @@ studyForm.addEventListener("submit", async (e) => {
     plannedHoursSpan.textContent = summary.plannedHours;
     completedHoursSpan.textContent = summary.completedHours;
     activeSubjectSpan.textContent = summary.activeSubject || "-";
-
+    if (completionBarFill) {
+    const pct = Math.max(0, Math.min(100, summary.completionPercent || 0)); // clamp 0–100
+    completionBarFill.style.width = pct + "%";
+    }
     // Fill assignment table
     parentAssignmentsBody.innerHTML = "";
     assignments.forEach((a) => {

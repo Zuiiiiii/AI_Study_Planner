@@ -135,6 +135,41 @@ app.post("/api/alert-parent", (req, res) => {
     alertPayload,
   });
 });
+// ===============================
+// UPDATE ASSIGNMENT MARKS
+// ===============================
+app.post("/api/update-marks", (req, res) => {
+  const { studentName, marks } = req.body; // marks = [ { index, score } ]
+
+  if (!studentName || !Array.isArray(marks)) {
+    return res.status(400).json({ error: "Invalid data" });
+  }
+
+  if (!students[studentName]) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+
+  const assns = assignments[studentName] || [];
+
+  marks.forEach((entry) => {
+    const { index, score } = entry;
+    if (
+      typeof index === "number" &&
+      assns[index] &&
+      typeof score === "number" &&
+      !Number.isNaN(score)
+    ) {
+      assns[index].marks = score;
+    }
+  });
+
+  assignments[studentName] = assns;
+
+  res.json({
+    success: true,
+    assignments: assns,
+  });
+});
 
 // ===============================
 // PARENT OVERVIEW (for dashboard)
